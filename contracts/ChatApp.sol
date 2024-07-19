@@ -37,4 +37,11 @@ contract ChatApp {
 
         users[msg.sender].name = name;
     }
+
+    // Find user name given user address.
+    function getUserName(address publicKey) public returns (string memory) {
+        require(doesUserExist(publicKey), "User does not exist!");
+
+        return users[publicKey].name
+    }
 }
