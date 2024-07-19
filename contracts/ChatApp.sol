@@ -82,4 +82,13 @@ contract ChatApp {
     function getFriends() external view returns(Friend[] memory) {
         return users[msg.sender].friends;
     }
+
+    // Get chat code.
+    function _getChatCode(address publicKey1, address publicKey2) internal pure returns(bytes32) {
+        if (publicKey1 < publicKey2) {
+            return keccak256(abi.encodePacked(publicKey1, publicKey2));
+        } else {
+            return keccak256(abi.encodePacked(publicKey2, publicKey1));
+        }
+    }
 }
