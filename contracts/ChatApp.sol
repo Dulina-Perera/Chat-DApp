@@ -69,7 +69,7 @@ contract ChatApp {
 
     // Add a friend. (Extenal)
     function addFriend(address publicKey, string calldata name) external {
-        require(doesUserExist(msg.sender), "Create an account first!");
+        require(doesUserExist(msg.sender), "You have to create an account first!");
         require(doesUserExist(publicKey), "The user you're trying to add does not exist!");
         require(msg.sender != publicKey, "You can't add yourself as a friend.");
         require(!areFriends(msg.sender, publicKey), "You two are already friends!");
@@ -90,5 +90,16 @@ contract ChatApp {
         } else {
             return keccak256(abi.encodePacked(publicKey2, publicKey1));
         }
+    }
+
+    // Send a message to a friend.
+    function sendMessage(address receiver, string calldata content) external {
+        require(doesUserExist(msg.sender), "You have to create an account first!");
+        require(doesUserExist(receiver), "The user you're trying to chat with does not exist!");
+        require(areFriends(msg.sender, receiver), "You have to befriend this user to start chatting!");
+
+        bytes32 chatCode = _getChatCode(msg.sender, receiver);
+        Message memory message = Message(msg.sender, receiver, block.timestamp, content);
+        messages[chatCode].push(message);
     }
 }
