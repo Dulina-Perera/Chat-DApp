@@ -2,19 +2,20 @@
 pragma solidity ^0.8.19;
 
 contract ChatApp {
-    // User struct
+    struct _User {
+        string name;
+        address publicKey;
+    }
     struct User {
         string name;
         Friend[] friends;
     }
 
-    // Friend struct
     struct Friend {
         address publicKey;
         string name;
     }
 
-    // Message struct
     struct Message {
         address from;
         address to;
@@ -22,52 +23,49 @@ contract ChatApp {
         string content;
     }
 
-    mapping(address => User) users; // Mapping of public key to User
-    mapping(bytes32 => Message[]) messages; // Mapping of hash to Message
+    _User[] public users;
 
-    // Check if user exists.
+    mapping(address => User) userByPublicKey;
+    mapping(bytes32 => Message[]) messages;
+
     function doesUserExist(address publicKey) public view returns (bool) {
-        return bytes(users[publicKey].name).length > 0;
+        return bytes(userByPublicKey[publicKey].name).length > 0;
     }
 
-    // Create a new account.
     function createAccount(string calldata name) external {
         require(!doesUserExist(msg.sender), "User already exists!");
         require(bytes(name).length > 0, "Name cannot be empty!");
 
-        users[msg.sender].name = name;
+        users.push(_User(name, msg.sender));
+        userByPublicKey[msg.sender].name = name;
     }
 
-    // Find user name given user address.
     function getUserName(address publicKey) external returns (string memory) {
         require(doesUserExist(publicKey), "User does not exist!");
 
-        return users[publicKey].name
+        return userByPublicKey[publicKey].name
     }
 
-    // Check whether two users are friends.
     function areFriends(address publicKey1, address publicKey2) internal view returns (bool) {
-        if (users[publicKey1].friends.length > users[publicKey2].friends.length) {
+        if (userByPublicKey[publicKey1].friends.length > userByPublicKey[publicKey2].friends.length) {
             address temporary = publicKey1;
             publicKey1 = publicKey2;
             publicKey2 = temporary;
         }
 
-        for (uint256 i = 0; i < users[publicKey1].friends.length; i++) {
-            if (users[publicKey1].friends[i].publicKey == publicKey2) {
+        for (uint256 i = 0; i < userByPublicKey[publicKey1].friends.length; i++) {
+            if (userByPublicKey[publicKey1].friends[i].publicKey == publicKey2) {
                 return true;
             }
         }
         return false;
     }
 
-    // Add a friend. (Internal)
     function _addFriend(address publicKey1, address publicKey2, string memory name) internal {
         Friend memory friend = Friend(publicKey2, name);
-        users[publicKey1].friends.push(friend);
+        userByPublicKey[publicKey1].friends.push(friend);
     }
 
-    // Add a friend. (Extenal)
     function addFriend(address publicKey, string calldata name) external {
         require(doesUserExist(msg.sender), "You have to create an account first!");
         require(doesUserExist(publicKey), "The user you're trying to add does not exist!");
@@ -75,15 +73,13 @@ contract ChatApp {
         require(!areFriends(msg.sender, publicKey), "You two are already friends!");
 
         _addFriend(msg.sender, publicKey, name);
-        _addFriend(publicKey, msg.sender, users[msg.sender].name);
+        _addFriend(publicKey, msg.sender, userByPublicKey[msg.sender].name);
     }
 
-    // Find all friends of a user.
     function getFriends() external view returns(Friend[] memory) {
-        return users[msg.sender].friends;
+        return userByPublicKey[msg.sender].friends;
     }
 
-    // Get chat code.
     function _getChatCode(address publicKey1, address publicKey2) internal pure returns(bytes32) {
         if (publicKey1 < publicKey2) {
             return keccak256(abi.encodePacked(publicKey1, publicKey2));
@@ -92,7 +88,6 @@ contract ChatApp {
         }
     }
 
-    // Send a message to a friend.
     function sendMessage(address receiver, string calldata content) external {
         require(doesUserExist(msg.sender), "You have to create an account first!");
         require(doesUserExist(receiver), "The user you're trying to chat with does not exist!");
@@ -101,5 +96,14 @@ contract ChatApp {
         bytes32 chatCode = _getChatCode(msg.sender, receiver);
         Message memory message = Message(msg.sender, receiver, block.timestamp, content);
         messages[chatCode].push(message);
+    }
+
+    function readMessages(address friend) external view returns(Message[] memory) {
+        bytes32 chatCode = _getChatCode(msg.sender, receiver);
+        return messages[chatCode];
+    }
+
+    function getAllUsers() public view returns(_User[] memory) {
+        return users;
     }
 }
