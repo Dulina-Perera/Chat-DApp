@@ -77,4 +77,9 @@ contract ChatApp {
         _addFriend(msg.sender, publicKey, name);
         _addFriend(publicKey, msg.sender, users[msg.sender].name);
     }
+
+    // Find all friends of a user.
+    function getFriends() external view returns(Friend[] memory) {
+        return users[msg.sender].friends;
+    }
 }
