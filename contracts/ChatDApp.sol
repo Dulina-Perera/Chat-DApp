@@ -40,7 +40,7 @@ contract ChatApp {
         userByPublicKey[msg.sender].name = name;
     }
 
-    function getUserName(address publicKey) external returns (string memory) {
+    function getUserName(address publicKey) external view returns (string memory) {
         require(doesUserExist(publicKey), "User does not exist!");
 
         return userByPublicKey[publicKey].name;
