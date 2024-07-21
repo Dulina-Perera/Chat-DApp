@@ -43,7 +43,7 @@ contract ChatApp {
     function getUserName(address publicKey) external returns (string memory) {
         require(doesUserExist(publicKey), "User does not exist!");
 
-        return userByPublicKey[publicKey].name
+        return userByPublicKey[publicKey].name;
     }
 
     function areFriends(address publicKey1, address publicKey2) internal view returns (bool) {
@@ -99,7 +99,7 @@ contract ChatApp {
     }
 
     function readMessages(address friend) external view returns(Message[] memory) {
-        bytes32 chatCode = _getChatCode(msg.sender, receiver);
+        bytes32 chatCode = _getChatCode(msg.sender, friend);
         return messages[chatCode];
     }
 
